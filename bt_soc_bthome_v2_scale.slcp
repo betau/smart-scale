@@ -1,10 +1,11 @@
-project_name: smart-scale
+project_name: bt_soc_bthome_v2_scale
 package: Bluetooth
-label: Bluetooth - Smart Scale
+label: Bluetooth - BTHome v2 - Scale
 description: >
-  Implements a GATT Server which enables a central device to connect and get weight measurement data.
+  This project illustrates how BTHome protocol can be effectively utilized with Silicon Labs devkits
+  to communicate load cell sensor values to a HomeAssistant system.
 category: Bluetooth Examples
-quality: evaluation
+quality: experimental
 
 component:
   - id: bluetooth_stack
@@ -30,24 +31,33 @@ component:
       - hx711_dt
       - hx711_sck  
   - id: mpu
-  - id: bt_post_build
   - id: sl_system
   - id: clock_manager
   - id: device_init
+  - id: mbedtls_ccm
+  - id: sl_string
 
 source:
   - path: main.c
   - path: app.c
   - path: hx711.c
+  - path: bthome_v2.c
 
 include:
   - path: .
     file_list:
       - path: app.h
       - path: hx711.h
+      - path: hx711_platform.h
+      - path: bthome_v2.h
 
 readme:
   - path: README.md
+
+other_file:
+  - path: image/gatt.png
+  - path: image/schematic_diagram.png
+  - path: image/studio_launcher.png
 
 config_file:
   - override:

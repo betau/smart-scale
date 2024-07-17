@@ -1,18 +1,9 @@
 #include "hx711.h"
-#include "em_gpio.h"
-#include "sl_emlib_gpio_init_hx711_dt_config.h"
-#include "sl_emlib_gpio_init_hx711_sck_config.h"
-#include "cmsis_compiler.h"
+#include "hx711_platform.h"
 
 static uint8_t GAIN = 1;   // amplification factor
 static long OFFSET = 0;    // used for tare weight
 static float SCALE = 1;    // used to return weight in grams, kg, ounces, whatever
-
-#define clock_high() GPIO_PinOutSet(SL_EMLIB_GPIO_INIT_HX711_SCK_PORT, SL_EMLIB_GPIO_INIT_HX711_SCK_PIN)
-#define clock_low()  GPIO_PinOutClear(SL_EMLIB_GPIO_INIT_HX711_SCK_PORT, SL_EMLIB_GPIO_INIT_HX711_SCK_PIN)
-#define get_DOUT()   GPIO_PinInGet(SL_EMLIB_GPIO_INIT_HX711_DT_PORT, SL_EMLIB_GPIO_INIT_HX711_DT_PIN)
-
-#define delay()      __NOP()
 
 void HX711_init(uint8_t gain) {
     HX711_set_gain(gain);

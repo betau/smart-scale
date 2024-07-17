@@ -75,14 +75,15 @@
     </characteristic>
   </service>
 
-  <!--weight_scale-->
-  <service advertise="false" name="weight_scale" requirement="mandatory" sourceId="" type="primary" uuid="70ead195-7028-4ea9-8298-4f2090e76618">
+  <!--mass_scale-->
+  <service advertise="false" name="mass_scale" requirement="mandatory" sourceId="" type="primary" uuid="70ead195-7028-4ea9-8298-4f2090e76618">
 
-    <!--measurement-->
-    <characteristic const="false" id="measurement" name="measurement" sourceId="" uuid="ddda4ee4-c4ce-45eb-a9ce-6cfc24ad3447">
-      <description>weight</description>
-      <value length="4" type="hex" variable_length="false">00</value>
+    <!--mass-->
+    <characteristic const="false" id="mass" name="mass" sourceId="" uuid="ddda4ee4-c4ce-45eb-a9ce-6cfc24ad3447">
+      <description>mass</description>
+      <value length="4" type="user" variable_length="false">00</value>
       <properties>
+        <read authenticated="false" bonded="false" encrypted="false"/>
         <indicate authenticated="false" bonded="false" encrypted="false"/>
       </properties>
     </characteristic>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ASCII"?><model:MDescriptors xmlns:model="http://www.silabs.com/ss/Studio.ecore">
+  <descriptors name="bt_soc_bthome_v2_scale" label="Bluetooth - BTHome v2 - Scale"
+               description="This project illustrates how BTHome protocol can be effectively utilized with Silicon Labs devkits to communicate load cell sensor values to a HomeAssistant system.">
+    <properties key="namespace" value="template.uc"/>
+    <properties key="keywords" value="universal\ configurator"/>
+    <properties key="projectFilePaths" value="bt_soc_bthome_v2_scale.slcp"/>
+    <properties key="readmeFiles" value="README.md"/>
+    <properties key="boardCompatibility" value="brd4108a brd4314a brd2703a brd2704a brd2601b com.silabs.board.none"/>
+    <properties key="partCompatibility" value=".*bgm22.* .*efr32bg22.* .*mgm24.* .*efr32[bm]g24.* .*efr32[x]g24.*"/>
+    <properties key="ideCompatibility" value="iar-embedded-workbench makefile-ide segger-embedded-studio simplicity-ide"/>
+    <properties key="toolchainCompatibility" value="gcc iar segger"/>
+    <properties key="category" value="Bluetooth Examples"/>
+    <properties key="quality" value="EXPERIMENTAL"/>
+    <properties key="filters" value="Device\ Type|SoC Project\ Difficulty|Advanced Wireless\ Technology|Bluetooth"/>
+    <properties key="stockConfigCompatibility" value="com.silabs.ss.framework.project.toolchain.core.default"/>
+  </descriptors>
+</model:MDescriptors>  

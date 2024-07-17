@@ -42,12 +42,10 @@
 // <gpio> SL_EMLIB_GPIO_INIT_HX711_DT
 // $[GPIO_SL_EMLIB_GPIO_INIT_HX711_DT]
 #ifndef SL_EMLIB_GPIO_INIT_HX711_DT_PORT        
-//#define SL_EMLIB_GPIO_INIT_HX711_DT_PORT         gpioPortD
-#define SL_EMLIB_GPIO_INIT_HX711_DT_PORT         gpioPortB
+#define SL_EMLIB_GPIO_INIT_HX711_DT_PORT         gpioPortD
 #endif
 #ifndef SL_EMLIB_GPIO_INIT_HX711_DT_PIN         
-//#define SL_EMLIB_GPIO_INIT_HX711_DT_PIN          3
-#define SL_EMLIB_GPIO_INIT_HX711_DT_PIN          1
+#define SL_EMLIB_GPIO_INIT_HX711_DT_PIN          3
 #endif
 // [GPIO_SL_EMLIB_GPIO_INIT_HX711_DT]$
 
