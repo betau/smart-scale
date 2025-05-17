@@ -356,6 +356,7 @@ static void tare_timer_cb(app_timer_t *timer, void *data)
   app_log_status_error_f(sc, "Failed to update offset characteristic after tare\n");
   sc = nvm_write(NVM_KEY_OFFSET, &offset, sizeof(offset));
   app_log_status_error_f(sc, "Failed to write offset to NVM after tare\n");
+  (void)sc;
 }
 
 static float get_mass(void)

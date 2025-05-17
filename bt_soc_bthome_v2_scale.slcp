@@ -18,10 +18,6 @@ component:
   - id: bluetooth_feature_system
   - id: app_timer
   - id: app_assert
-  - id: app_log
-  - id: iostream_usart
-    instance:
-      - vcom
   - id: simple_button
     instance:
       - btn0
@@ -38,7 +34,6 @@ component:
   - id: sl_string
   - id: in_place_ota_dfu
   - id: ustimer
-  - id: printf
   - id: nvm3_source
 
 source:
@@ -97,7 +92,7 @@ configuration:
   - name: SL_STACK_SIZE
     value: "2752"
   - name: SL_BOARD_ENABLE_VCOM
-    value: "1"
+    value: "0"
   - name: SL_SIMPLE_BUTTON_GPIO_MODE
     value: SL_GPIO_MODE_INPUT_PULL
   - name: SL_SIMPLE_BUTTON_GPIO_DOUT
