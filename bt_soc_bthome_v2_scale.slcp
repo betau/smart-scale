@@ -39,12 +39,14 @@ component:
   - id: in_place_ota_dfu
   - id: ustimer
   - id: printf
+  - id: nvm3_source
 
 source:
   - path: main.c
   - path: app.c
   - path: hx711.c
   - path: bthome_v2.c
+  - path: nvm.c
 
 include:
   - path: .
@@ -53,6 +55,7 @@ include:
       - path: hx711.h
       - path: hx711_platform.h
       - path: bthome_v2.h
+      - path: nvm.h
 
 readme:
   - path: README.md

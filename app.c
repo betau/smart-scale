@@ -37,17 +37,21 @@
 #include "gatt_db.h"
 #include "hx711.h"
 #include "bthome_v2.h"
+#include "nvm.h"
+#include "em_device.h"
 #include "sl_component_catalog.h"
 #if defined(SL_CATALOG_APP_LOG_PRESENT)
 #include "app_log.h"
 #else
 #define app_log(...)
+#define app_log_status_error_f(...)
 #endif // SL_CATALOG_APP_LOG_PRESENT
 
 #define MEASUREMENT_INTERVAL_IND_MS  1000
 #define MEASUREMENT_INTERVAL_ADV_MS  10000
 #define TARE_DELAY_MS                2000
 #define DEFAULT_SCALE                375
+#define DEFAULT_OFFSET               0
 #define AVERAGE_COUNT                5
 
 static uint8_t device_name[] = "Mass";
@@ -67,6 +71,7 @@ static void measurement_indication_cb(app_timer_t *timer, void *data);
 static void measurement_advertising_cb(app_timer_t *timer, void *data);
 static void tare_timer_cb(app_timer_t *timer, void *data);
 static void gatt_server_init(void);
+static void load_config(void);
 
 static void measurement_indication_changed_cb(sl_bt_gatt_client_config_flag_t client_config);
 static float get_mass(void);
@@ -77,12 +82,9 @@ static float get_mass(void);
 void app_init(void)
 {
   app_log("BTHome v2 scale\n");
+  load_config();
   HX711_init(128);
   app_log("HX711_init done\n");
-  HX711_tare(AVERAGE_COUNT);
-  app_log("HX711_tare done\n");
-  HX711_set_scale(DEFAULT_SCALE);
-  app_log("HX711_set_scale done\n");
   HX711_power_down();
 }
 
@@ -200,7 +202,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
         }
       }
       break;
-    
+
     case sl_bt_evt_gatt_server_user_read_request_id:
       if (evt->data.evt_gatt_server_user_read_request.characteristic == gattdb_mass) {
         float mass = get_mass();
@@ -214,6 +216,19 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
             NULL);
       }
       break;
+
+    case sl_bt_evt_gatt_server_user_write_request_id:
+      if (evt->data.evt_gatt_server_user_write_request.characteristic == gattdb_factory_reset) {
+        sc = nvm_erase_all();
+        if (sc != SL_STATUS_OK) {
+          sl_bt_gatt_server_send_user_write_response(evt->data.evt_gatt_server_user_write_request.connection,
+                                                     evt->data.evt_gatt_server_user_write_request.characteristic,
+                                                     (uint8_t)SL_STATUS_BT_ATT_APPLICATION);
+        } else {
+          NVIC_SystemReset();
+        }
+      }
+      break;
     
     // -------------------------------
     // This event indicates that the value of an attribute in the local GATT
@@ -225,24 +240,34 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
           int32_t scale = *(int32_t *)evt->data.evt_gatt_server_attribute_value.value.data;
           HX711_set_scale((float)scale);
           app_log("Scale set to %ld\n", scale);
+          sc = nvm_write(NVM_KEY_SCALE, &scale, sizeof(scale));
+          app_log_status_error_f(sc, "Failed to write scale to NVM\n");
           break;
         case gattdb_offset:
           // Set the new offset value.
           int32_t offset = *(int32_t *)evt->data.evt_gatt_server_attribute_value.value.data;
           HX711_set_offset((long)offset);
           app_log("Offset set to %ld\n", offset);
+          sc = nvm_write(NVM_KEY_OFFSET, &offset, sizeof(offset));
+          app_log_status_error_f(sc, "Failed to write offset to NVM\n");
           break;
         case gattdb_object_id:
           object_id = *evt->data.evt_gatt_server_attribute_value.value.data;
           app_log("Object ID set to 0x%02x\n", object_id);
+          sc = nvm_write(NVM_KEY_OBJECT_ID, &object_id, sizeof(object_id));
+          app_log_status_error_f(sc, "Failed to write object ID to NVM\n");
           break;
         case gattdb_mass_indication_interval:
           measurement_interval_ind_ms = *(uint32_t *)evt->data.evt_gatt_server_attribute_value.value.data;
           app_log("Measurement indication interval set to %lu ms\n", measurement_interval_ind_ms);
+          sc = nvm_write(NVM_KEY_INTERVAL_IND, &measurement_interval_ind_ms, sizeof(measurement_interval_ind_ms));
+          app_log_status_error_f(sc, "Failed to write measurement indication interval to NVM\n");
           break;
         case gattdb_mass_advertising_interval:
           measurement_interval_adv_ms = *(uint32_t *)evt->data.evt_gatt_server_attribute_value.value.data;
           app_log("Measurement advertising interval set to %lu ms\n", measurement_interval_adv_ms);
+          sc = nvm_write(NVM_KEY_INTERVAL_ADV, &measurement_interval_adv_ms, sizeof(measurement_interval_adv_ms));
+          app_log_status_error_f(sc, "Failed to write measurement advertising interval to NVM\n");
           break;
       }
 
@@ -328,7 +353,9 @@ static void tare_timer_cb(app_timer_t *timer, void *data)
                                                0,
                                                sizeof(offset),
                                                (uint8_t*)&offset);
-  app_assert_status(sc);
+  app_log_status_error_f(sc, "Failed to update offset characteristic after tare\n");
+  sc = nvm_write(NVM_KEY_OFFSET, &offset, sizeof(offset));
+  app_log_status_error_f(sc, "Failed to write offset to NVM after tare\n");
 }
 
 static float get_mass(void)
@@ -370,4 +397,41 @@ static void gatt_server_init(void)
                                                sizeof(measurement_interval_adv_ms),
                                                (uint8_t*)&measurement_interval_adv_ms);
   app_assert_status(sc);
+}
+
+void load_config(void)
+{
+  sl_status_t sc;
+  size_t size;
+  sc = nvm_init();
+  app_assert_status(sc);
+
+  int32_t scale = DEFAULT_SCALE;
+  size = sizeof(scale);
+  sc = nvm_read(NVM_KEY_SCALE, &scale, &size);
+  app_log_status_error_f(sc, "Failed to read scale from NVM\n");
+  app_log("Scale set to %ld\n", scale);
+  HX711_set_scale((float)scale);
+
+  int32_t offset = DEFAULT_OFFSET;
+  size = sizeof(offset);
+  sc = nvm_read(NVM_KEY_OFFSET, &offset, &size);
+  app_log_status_error_f(sc, "Failed to read offset from NVM\n");
+  app_log("Offset set to %ld\n", offset);
+  HX711_set_offset((long)offset);
+
+  size = sizeof(object_id);
+  sc = nvm_read(NVM_KEY_OBJECT_ID, &object_id, &size);
+  app_log_status_error_f(sc, "Failed to read object ID from NVM\n");
+  app_log("Object ID set to 0x%02x\n", object_id);
+
+  size = sizeof(measurement_interval_ind_ms);
+  sc = nvm_read(NVM_KEY_INTERVAL_IND, &measurement_interval_ind_ms, &size);
+  app_log_status_error_f(sc, "Failed to read measurement indication interval from NVM\n");
+  app_log("Measurement indication interval set to %lu ms\n", measurement_interval_ind_ms);
+
+  size = sizeof(measurement_interval_adv_ms);
+  sc = nvm_read(NVM_KEY_INTERVAL_ADV, &measurement_interval_adv_ms, &size);
+  app_log_status_error_f(sc, "Failed to read measurement advertising interval from NVM\n");
+  app_log("Measurement advertising interval set to %lu ms\n", measurement_interval_adv_ms);
 }

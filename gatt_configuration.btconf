@@ -135,5 +135,14 @@
         <write authenticated="false" bonded="false" encrypted="false"/>
       </properties>
     </characteristic>
+
+    <!--factory_reset-->
+    <characteristic const="false" id="factory_reset" name="factory_reset" sourceId="" uuid="ddda4eea-c4ce-45eb-a9ce-6cfc24ad3447">
+      <informativeText>control point characteristic for factory reset</informativeText>
+      <value type="user" variable_length="false"></value>
+      <properties>
+        <write authenticated="false" bonded="false" encrypted="false"/>
+      </properties>
+    </characteristic>
   </service>
 </gatt>
