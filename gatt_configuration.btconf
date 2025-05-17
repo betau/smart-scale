@@ -118,8 +118,8 @@
 
     <!--mass_indication_interval-->
     <characteristic const="false" id="mass_indication_interval" name="mass_indication_interval" sourceId="" uuid="ddda4ee8-c4ce-45eb-a9ce-6cfc24ad3447">
-      <informativeText>indication interval of the mass characteristic in msec</informativeText>
-      <value length="4" type="hex" variable_length="false">000003E8</value>
+      <informativeText>indication interval of the mass characteristic in sec</informativeText>
+      <value length="2" type="hex" variable_length="false">0001</value>
       <properties>
         <read authenticated="false" bonded="false" encrypted="false"/>
         <write authenticated="false" bonded="false" encrypted="false"/>
@@ -128,8 +128,8 @@
 
     <!--mass_advertising_interval-->
     <characteristic const="false" id="mass_advertising_interval" name="mass_advertising_interval" sourceId="" uuid="ddda4ee9-c4ce-45eb-a9ce-6cfc24ad3447">
-      <informativeText>advertising interval of the mass characteristic in msec</informativeText>
-      <value length="4" type="hex" variable_length="false">00002710</value>
+      <informativeText>advertising interval of the mass characteristic in sec</informativeText>
+      <value length="2" type="hex" variable_length="false">000A</value>
       <properties>
         <read authenticated="false" bonded="false" encrypted="false"/>
         <write authenticated="false" bonded="false" encrypted="false"/>

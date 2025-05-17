@@ -47,8 +47,8 @@
 #define app_log_status_error_f(...)
 #endif // SL_CATALOG_APP_LOG_PRESENT
 
-#define MEASUREMENT_INTERVAL_IND_MS  1000
-#define MEASUREMENT_INTERVAL_ADV_MS  10000
+#define MEASUREMENT_INTERVAL_IND_SEC 1
+#define MEASUREMENT_INTERVAL_ADV_SEC 10
 #define TARE_DELAY_MS                2000
 #define DEFAULT_SCALE                375
 #define DEFAULT_OFFSET               0
@@ -57,8 +57,8 @@
 static uint8_t device_name[] = "Mass";
 
 static uint8_t object_id = ID_MASS;
-static uint32_t measurement_interval_ind_ms = MEASUREMENT_INTERVAL_IND_MS;
-static uint32_t measurement_interval_adv_ms = MEASUREMENT_INTERVAL_ADV_MS;
+static uint16_t measurement_interval_ind_sec = MEASUREMENT_INTERVAL_IND_SEC;
+static uint16_t measurement_interval_adv_sec = MEASUREMENT_INTERVAL_ADV_SEC;
 
 // Button state.
 static volatile bool tare_button_pressed = false;
@@ -164,7 +164,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       app_assert_status(sc);
 
       sc = app_timer_start(&measurement_timer,
-                           measurement_interval_adv_ms,
+                           measurement_interval_adv_sec * 1000,
                            measurement_advertising_cb,
                            NULL,
                            true);
@@ -184,7 +184,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
     case sl_bt_evt_connection_closed_id:
       app_log("Connection closed\n");
       sc = app_timer_start(&measurement_timer,
-                           measurement_interval_adv_ms,
+                           measurement_interval_adv_sec * 1000,
                            measurement_advertising_cb,
                            NULL,
                            true);
@@ -258,15 +258,15 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
           app_log_status_error_f(sc, "Failed to write object ID to NVM\n");
           break;
         case gattdb_mass_indication_interval:
-          measurement_interval_ind_ms = *(uint32_t *)evt->data.evt_gatt_server_attribute_value.value.data;
-          app_log("Measurement indication interval set to %lu ms\n", measurement_interval_ind_ms);
-          sc = nvm_write(NVM_KEY_INTERVAL_IND, &measurement_interval_ind_ms, sizeof(measurement_interval_ind_ms));
+          measurement_interval_ind_sec = *(uint16_t *)evt->data.evt_gatt_server_attribute_value.value.data;
+          app_log("Measurement indication interval set to %u s\n", measurement_interval_ind_sec);
+          sc = nvm_write(NVM_KEY_INTERVAL_IND, &measurement_interval_ind_sec, sizeof(measurement_interval_ind_sec));
           app_log_status_error_f(sc, "Failed to write measurement indication interval to NVM\n");
           break;
         case gattdb_mass_advertising_interval:
-          measurement_interval_adv_ms = *(uint32_t *)evt->data.evt_gatt_server_attribute_value.value.data;
-          app_log("Measurement advertising interval set to %lu ms\n", measurement_interval_adv_ms);
-          sc = nvm_write(NVM_KEY_INTERVAL_ADV, &measurement_interval_adv_ms, sizeof(measurement_interval_adv_ms));
+          measurement_interval_adv_sec = *(uint16_t *)evt->data.evt_gatt_server_attribute_value.value.data;
+          app_log("Measurement advertising interval set to %u s\n", measurement_interval_adv_sec);
+          sc = nvm_write(NVM_KEY_INTERVAL_ADV, &measurement_interval_adv_sec, sizeof(measurement_interval_adv_sec));
           app_log_status_error_f(sc, "Failed to write measurement advertising interval to NVM\n");
           break;
       }
@@ -288,7 +288,7 @@ static void measurement_indication_changed_cb(sl_bt_gatt_client_config_flag_t cl
   if (sl_bt_gatt_disable != client_config) {
     // Start timer used for periodic indications.
     sc = app_timer_start(&measurement_timer,
-                         measurement_interval_ind_ms,
+                         measurement_interval_ind_sec * 1000,
                          measurement_indication_cb,
                          NULL,
                          true);
@@ -389,13 +389,13 @@ static void gatt_server_init(void)
   app_assert_status(sc);
   sc = sl_bt_gatt_server_write_attribute_value(gattdb_mass_indication_interval,
                                                0,
-                                               sizeof(measurement_interval_ind_ms),
-                                               (uint8_t*)&measurement_interval_ind_ms);
+                                               sizeof(measurement_interval_ind_sec),
+                                               (uint8_t*)&measurement_interval_ind_sec);
   app_assert_status(sc);
   sc = sl_bt_gatt_server_write_attribute_value(gattdb_mass_advertising_interval,
                                                0,
-                                               sizeof(measurement_interval_adv_ms),
-                                               (uint8_t*)&measurement_interval_adv_ms);
+                                               sizeof(measurement_interval_adv_sec),
+                                               (uint8_t*)&measurement_interval_adv_sec);
   app_assert_status(sc);
 }
 
@@ -425,13 +425,13 @@ void load_config(void)
   app_log_status_error_f(sc, "Failed to read object ID from NVM\n");
   app_log("Object ID set to 0x%02x\n", object_id);
 
-  size = sizeof(measurement_interval_ind_ms);
-  sc = nvm_read(NVM_KEY_INTERVAL_IND, &measurement_interval_ind_ms, &size);
+  size = sizeof(measurement_interval_ind_sec);
+  sc = nvm_read(NVM_KEY_INTERVAL_IND, &measurement_interval_ind_sec, &size);
   app_log_status_error_f(sc, "Failed to read measurement indication interval from NVM\n");
-  app_log("Measurement indication interval set to %lu ms\n", measurement_interval_ind_ms);
+  app_log("Measurement indication interval set to %u s\n", measurement_interval_ind_sec);
 
-  size = sizeof(measurement_interval_adv_ms);
-  sc = nvm_read(NVM_KEY_INTERVAL_ADV, &measurement_interval_adv_ms, &size);
+  size = sizeof(measurement_interval_adv_sec);
+  sc = nvm_read(NVM_KEY_INTERVAL_ADV, &measurement_interval_adv_sec, &size);
   app_log_status_error_f(sc, "Failed to read measurement advertising interval from NVM\n");
-  app_log("Measurement advertising interval set to %lu ms\n", measurement_interval_adv_ms);
+  app_log("Measurement advertising interval set to %u s\n", measurement_interval_adv_sec);
 }
