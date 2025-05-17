@@ -36,6 +36,9 @@ component:
   - id: device_init
   - id: mbedtls_ccm
   - id: sl_string
+  - id: in_place_ota_dfu
+  - id: ustimer
+  - id: printf
 
 source:
   - path: main.c
@@ -93,13 +96,13 @@ configuration:
   - name: SL_BOARD_ENABLE_VCOM
     value: "1"
   - name: SL_SIMPLE_BUTTON_GPIO_MODE
-    value: gpioModeInputPull
+    value: SL_GPIO_MODE_INPUT_PULL
   - name: SL_SIMPLE_BUTTON_GPIO_DOUT
     value: 1
 
-toolchain_settings:
-  - option: gcc_linker_option
-    value: -u _printf_float
+post_build:
+  - profile: bt_common
+    condition: [bootloader_app_properties]
 
 ui_hints:
   highlight:
