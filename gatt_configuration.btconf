@@ -87,5 +87,53 @@
         <indicate authenticated="false" bonded="false" encrypted="false"/>
       </properties>
     </characteristic>
+
+    <!--scale-->
+    <characteristic const="false" id="scale" name="scale" sourceId="" uuid="ddda4ee5-c4ce-45eb-a9ce-6cfc24ad3447">
+      <value length="4" type="hex" variable_length="false">00000001</value>
+      <properties>
+        <read authenticated="false" bonded="false" encrypted="false"/>
+        <write authenticated="false" bonded="false" encrypted="false"/>
+      </properties>
+    </characteristic>
+
+    <!--offset-->
+    <characteristic const="false" id="offset" name="offset" sourceId="" uuid="ddda4ee6-c4ce-45eb-a9ce-6cfc24ad3447">
+      <value length="4" type="hex" variable_length="false">00000000</value>
+      <properties>
+        <read authenticated="false" bonded="false" encrypted="false"/>
+        <write authenticated="false" bonded="false" encrypted="false"/>
+      </properties>
+    </characteristic>
+
+    <!--object_id-->
+    <characteristic const="false" id="object_id" name="object_id" sourceId="" uuid="ddda4ee7-c4ce-45eb-a9ce-6cfc24ad3447">
+      <informativeText>https://bthome.io/format/</informativeText>
+      <value length="1" type="hex" variable_length="false">06</value>
+      <properties>
+        <read authenticated="false" bonded="false" encrypted="false"/>
+        <write authenticated="false" bonded="false" encrypted="false"/>
+      </properties>
+    </characteristic>
+
+    <!--mass_indication_interval-->
+    <characteristic const="false" id="mass_indication_interval" name="mass_indication_interval" sourceId="" uuid="ddda4ee8-c4ce-45eb-a9ce-6cfc24ad3447">
+      <informativeText>indication interval of the mass characteristic in msec</informativeText>
+      <value length="4" type="hex" variable_length="false">000003E8</value>
+      <properties>
+        <read authenticated="false" bonded="false" encrypted="false"/>
+        <write authenticated="false" bonded="false" encrypted="false"/>
+      </properties>
+    </characteristic>
+
+    <!--mass_advertising_interval-->
+    <characteristic const="false" id="mass_advertising_interval" name="mass_advertising_interval" sourceId="" uuid="ddda4ee9-c4ce-45eb-a9ce-6cfc24ad3447">
+      <informativeText>advertising interval of the mass characteristic in msec</informativeText>
+      <value length="4" type="hex" variable_length="false">00002710</value>
+      <properties>
+        <read authenticated="false" bonded="false" encrypted="false"/>
+        <write authenticated="false" bonded="false" encrypted="false"/>
+      </properties>
+    </characteristic>
   </service>
 </gatt>

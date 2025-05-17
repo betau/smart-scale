@@ -52,6 +52,10 @@
 
 static uint8_t device_name[] = "Mass";
 
+static uint8_t object_id = ID_MASS;
+static uint32_t measurement_interval_ind_ms = MEASUREMENT_INTERVAL_IND_MS;
+static uint32_t measurement_interval_adv_ms = MEASUREMENT_INTERVAL_ADV_MS;
+
 // Button state.
 static volatile bool tare_button_pressed = false;
 static volatile bool on_off_button_pressed = false;
@@ -62,6 +66,7 @@ static app_timer_t tare_timer;
 static void measurement_indication_cb(app_timer_t *timer, void *data);
 static void measurement_advertising_cb(app_timer_t *timer, void *data);
 static void tare_timer_cb(app_timer_t *timer, void *data);
+static void gatt_server_init(void);
 
 static void measurement_indication_changed_cb(sl_bt_gatt_client_config_flag_t client_config);
 static float get_mass(void);
@@ -147,17 +152,17 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
               address.addr[1],
               address.addr[0]);
 
-      app_assert_status(sc);
+      gatt_server_init();
       
       sc = bthome_v2_init(device_name, false, NULL, false);
       app_assert_status(sc);
 
-      bthome_v2_add_measurement_float(ID_MASS, get_mass());
+      bthome_v2_add_measurement_float(object_id, get_mass());
       sc = bthome_v2_send_packet();
       app_assert_status(sc);
 
       sc = app_timer_start(&measurement_timer,
-                           MEASUREMENT_INTERVAL_ADV_MS,
+                           measurement_interval_adv_ms,
                            measurement_advertising_cb,
                            NULL,
                            true);
@@ -177,7 +182,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
     case sl_bt_evt_connection_closed_id:
       app_log("Connection closed\n");
       sc = app_timer_start(&measurement_timer,
-                           MEASUREMENT_INTERVAL_ADV_MS,
+                           measurement_interval_adv_ms,
                            measurement_advertising_cb,
                            NULL,
                            true);
@@ -209,6 +214,37 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
             NULL);
       }
       break;
+    
+    // -------------------------------
+    // This event indicates that the value of an attribute in the local GATT
+    // database was changed by a remote GATT client.
+    case sl_bt_evt_gatt_server_attribute_value_id:
+      switch (evt->data.evt_gatt_server_attribute_value.attribute) {
+        case gattdb_scale:
+          // Set the new scale value.
+          int32_t scale = *(int32_t *)evt->data.evt_gatt_server_attribute_value.value.data;
+          HX711_set_scale((float)scale);
+          app_log("Scale set to %ld\n", scale);
+          break;
+        case gattdb_offset:
+          // Set the new offset value.
+          int32_t offset = *(int32_t *)evt->data.evt_gatt_server_attribute_value.value.data;
+          HX711_set_offset((long)offset);
+          app_log("Offset set to %ld\n", offset);
+          break;
+        case gattdb_object_id:
+          object_id = *evt->data.evt_gatt_server_attribute_value.value.data;
+          app_log("Object ID set to 0x%02x\n", object_id);
+          break;
+        case gattdb_mass_indication_interval:
+          measurement_interval_ind_ms = *(uint32_t *)evt->data.evt_gatt_server_attribute_value.value.data;
+          app_log("Measurement indication interval set to %lu ms\n", measurement_interval_ind_ms);
+          break;
+        case gattdb_mass_advertising_interval:
+          measurement_interval_adv_ms = *(uint32_t *)evt->data.evt_gatt_server_attribute_value.value.data;
+          app_log("Measurement advertising interval set to %lu ms\n", measurement_interval_adv_ms);
+          break;
+      }
 
     // -------------------------------
     // Default event handler.
@@ -227,7 +263,7 @@ static void measurement_indication_changed_cb(sl_bt_gatt_client_config_flag_t cl
   if (sl_bt_gatt_disable != client_config) {
     // Start timer used for periodic indications.
     sc = app_timer_start(&measurement_timer,
-                         MEASUREMENT_INTERVAL_IND_MS,
+                         measurement_interval_ind_ms,
                          measurement_indication_cb,
                          NULL,
                          true);
@@ -273,7 +309,7 @@ static void measurement_advertising_cb(app_timer_t *timer, void *data)
   (void)timer;
   float mass = get_mass();
   bthome_v2_reset_measurement();
-  bthome_v2_add_measurement_float(ID_MASS, mass);
+  bthome_v2_add_measurement_float(object_id, mass);
   bthome_v2_build_packet();
 }
 
@@ -285,6 +321,14 @@ static void tare_timer_cb(app_timer_t *timer, void *data)
   HX711_tare(AVERAGE_COUNT);
   HX711_power_down();
   app_log("tare done\n");
+  // Update offset characteristic value after tare
+  sl_status_t sc;
+  int32_t offset = (int32_t)HX711_get_offset();
+  sc = sl_bt_gatt_server_write_attribute_value(gattdb_offset,
+                                               0,
+                                               sizeof(offset),
+                                               (uint8_t*)&offset);
+  app_assert_status(sc);
 }
 
 static float get_mass(void)
@@ -294,4 +338,36 @@ static float get_mass(void)
   HX711_power_down();
   app_log("mass: %f\n", mass);
   return mass;
+}
+
+static void gatt_server_init(void)
+{
+  sl_status_t sc;
+  int32_t scale = (int32_t)HX711_get_scale();
+  int32_t offset = (int32_t)HX711_get_offset();
+  sc = sl_bt_gatt_server_write_attribute_value(gattdb_scale,
+                                               0,
+                                               sizeof(scale),
+                                               (uint8_t*)&scale);
+  app_assert_status(sc);
+  sc = sl_bt_gatt_server_write_attribute_value(gattdb_offset,
+                                               0,
+                                               sizeof(offset),
+                                               (uint8_t*)&offset);
+  app_assert_status(sc);
+  sc = sl_bt_gatt_server_write_attribute_value(gattdb_object_id,
+                                               0,
+                                               sizeof(object_id),
+                                               &object_id);
+  app_assert_status(sc);
+  sc = sl_bt_gatt_server_write_attribute_value(gattdb_mass_indication_interval,
+                                               0,
+                                               sizeof(measurement_interval_ind_ms),
+                                               (uint8_t*)&measurement_interval_ind_ms);
+  app_assert_status(sc);
+  sc = sl_bt_gatt_server_write_attribute_value(gattdb_mass_advertising_interval,
+                                               0,
+                                               sizeof(measurement_interval_adv_ms),
+                                               (uint8_t*)&measurement_interval_adv_ms);
+  app_assert_status(sc);
 }
